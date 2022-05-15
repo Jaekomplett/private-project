@@ -12,13 +12,12 @@ const ReviewContainer = styled.section`
 
 // #1 신규 리뷰 등록
 const ReviewRegister = styled.article`
-  padding: 1rem;
-
+  padding: 1.5rem;
   /* 5. 신규 리뷰 등록 영역 버튼 */
   input.register {
     color: var(--color-white);
     background-color: var(--color-main);
-    height: 45px;
+    height: 3rem;
     font-size: 15px;
     border-radius: 10px;
     padding: 0;
@@ -28,33 +27,53 @@ const ReviewRegister = styled.article`
 
 // #2 리뷰 검색
 const ReviewSearch = styled.article`
-  padding: 1rem;
+  padding: 1.5rem;
   background-color: var(--color-white);
   input.review-search {
+    margin-top: 0;
     background-color: var(--color-background);
   }
 `;
 
-// #3 리뷰 내역 -> grid 형식으로 제작하기
+// #3 리뷰 내역 -> 큰 화면에서는 grid 형식으로 Column 2줄 정렬
 const ReviewList = styled.article`
-  padding: 1rem;
+  padding: 1.5rem;
+  article.review-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
 
-  /* 6. 영화 리뷰 박스 영역 */
-  div.review-box {
-    background-color: var(--color-white);
-    border: 1px solid var(--color-border);
-    border-radius: 10px;
-    padding: 2rem 1.2rem;
-    /* 7. 영화 리뷰 박스 별점 영역 */
-    div.score-box {
-      display: inline-flex;
-      gap: 0.2rem;
-      span.review-score {
-        width: 15px;
-        height: 15px;
-        background-color: var(--color-yellow);
-        border: 1px solid var(--color-yellow);
-        border-radius: 50%;
+    /* 반응형 CSS로 작업지시서의 작은 화면과 같이 Column 1줄 정렬*/
+    @media screen and (max-width: 500px) {
+      display: flex;
+      flex-direction: column;
+    }
+    /* 6. 영화 리뷰 박스 영역 */
+    div.review-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      background-color: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      padding: 2rem 1.2rem;
+      /* 7. 영화 리뷰 박스 별점 영역 */
+      h3 {
+        font-size: 18px;
+      }
+      p {
+        margin-bottom: 0.5rem;
+      }
+      div.score-box {
+        display: inline-flex;
+        gap: 0.2rem;
+        span.review-score {
+          width: 15px;
+          height: 15px;
+          background-color: var(--color-yellow);
+          border: 1px solid var(--color-yellow);
+          border-radius: 50%;
+        }
       }
     }
   }
@@ -67,11 +86,7 @@ const Review = () => {
   const reviewState = useSelector(({ initialData }) => {
     return initialData;
   });
-
-  // 초기값엔 initialDate
-  const [addReview, setAddReview] = useState(reviewState);
-
-  // 기본 입력 상태값
+  const [emptyReview, setEmptyReview] = useState([]);
   const [inputValue, setInputValue] = useState({
     title: "",
     comment: "",
@@ -112,54 +127,47 @@ const Review = () => {
       // option의 value가 string으로 저장되기 때문에 number로 변환
     };
 
-    setAddReview((prev) => {
+    setEmptyReview((prev) => {
       return [...prev, inputData];
     });
 
     // JSON 형태로 변환 후 로컬 스토리지에 저장
-    localStorage.setItem("review", JSON.stringify([...addReview, inputData]));
+    localStorage.setItem("review", JSON.stringify([...emptyReview, inputData]));
     setInputValue({ title: "", comment: "", score: 1 });
   };
+  // ------
+
+  // --- 정렬 함수 ---
+  // #3 리뷰 내역 정렬
+  // 1. 별점 순 정렬
+  const scoreFilter = (a, b) => {
+    return b.score - a.score;
+  };
+  // 2. A-Z 순 정렬
+  const enFilter = (a, b) => {
+    let textA = a.title.toLowerCase();
+    let textB = b.title.toLowerCase();
+    return textA < textB ? -1 : textA === textB ? 0 : 1;
+  };
+  // 3. 가나다 순 정렬
+  const koFilter = (a, b) => {
+    return a.title < b.title ? -1 : a.title === b.title ? 0 : 1;
+  };
+  // ------
 
   // 마운트 시
   useEffect(() => {
-    const getLocalData = localStorage.getItem("review");
+    const getLocalData = JSON.parse(localStorage.getItem("review"));
     if (getLocalData === null) {
+      // 데이터가 없으면 더미데이터를 로컬스토리지에 입력
       localStorage.setItem("review", JSON.stringify(reviewState));
     } else {
-      setAddReview(addReview);
+      // 있다면
+      setEmptyReview(emptyReview);
     }
-  }, [addReview, reviewState]);
+  }, [emptyReview, reviewState]);
 
-  // 업마운트 시 localStorage에 저장된 데이터 추출
-  useEffect(() => {
-    // JSON -> Object 변환
-    const localReviewList = JSON.parse(localStorage.getItem("review"));
-    if (localReviewList) {
-      setAddReview(localReviewList);
-
-      // #3 리뷰 내역 정렬
-      // 1. 별점 순 정렬
-      const scoreFilter = (a, b) => {
-        return b.score - a.score;
-      };
-      // 2. A-Z 순 정렬
-      const enFilter = (a, b) => {
-        let textA = a.title.toLowerCase();
-        let textB = b.title.toLowerCase();
-        return textA < textB ? -1 : textA === textB ? 0 : 1;
-      };
-      // 3. 가나다 순 정렬
-      const koFilter = (a, b) => {
-        return a.title < b.title ? -1 : a.title === b.title ? 0 : 1;
-      };
-
-      let filteredList = localReviewList.sort(enFilter);
-      filteredList.sort(koFilter);
-      filteredList.sort(scoreFilter);
-    }
-  }, [inputValue]);
-
+  // --- 리뷰 검색 ---
   // 검색창 상태값
   const [search, setSearch] = useState("");
 
@@ -171,8 +179,10 @@ const Review = () => {
   // 검색 업데이트
   useEffect(() => {
     const getLocalData = JSON.parse(localStorage.getItem("review"));
-    const a = getLocalData.filter((data) => data.title.includes(search));
-    setAddReview(a);
+    const searchFilter = getLocalData.filter((data) =>
+      data.title.includes(search)
+    );
+    setEmptyReview(searchFilter);
   }, [search]);
 
   return (
@@ -226,11 +236,22 @@ const Review = () => {
       </ReviewSearch>
       <ReviewList>
         <h2>리뷰 내역</h2>
-        {addReview.map(({ title, comment, score }, i) => {
-          return (
-            <ReviewCard title={title} comment={comment} score={score} key={i} />
-          );
-        })}
+        <article className="review-grid">
+          {emptyReview
+            .sort(enFilter)
+            .sort(koFilter)
+            .sort(scoreFilter)
+            .map(({ id, title, comment, score }) => {
+              return (
+                <ReviewCard
+                  title={title}
+                  comment={comment}
+                  score={score}
+                  key={id}
+                />
+              );
+            })}
+        </article>
       </ReviewList>
     </ReviewContainer>
   );

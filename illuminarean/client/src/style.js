@@ -25,9 +25,9 @@ const GlobalStyle = createGlobalStyle`
   /* 1. 영역별 제목 ( 신규 리뷰 등록 / 리뷰 검색 / 리뷰 내역 )  */
   /* 글자 크기 18px */
   /* 글자 색상 #194e84 */
-  h2 {
+  h2{
     font-size: 18px;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1.2rem;
   }
 
   /* 2. 그 외 글자 */
